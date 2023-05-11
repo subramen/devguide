@@ -5,144 +5,172 @@
 Running and Writing Tests
 =========================
 
-.. note::
+Intro
+=====
 
-    This document assumes you are working from an
-    :ref:`in-development <indevbranch>` checkout of Python. If you
-    are not then some things presented here may not work as they may depend
-    on new features not available in earlier versions of Python.
+Testing is an important part of developing PyTorch. Good tests ensure both that:
 
-Running
+- operations in PyTorch correctly implement their behavior and that
+- changes to PyTorch do not change accidentally change these behaviors.
+
+This article explains PyTorch's existing testing tools to help you write effective and efficient tests.
+
+Test file organization
+======================
+
+PyTorch's test suites are located under `pytorch/test <https://github.com/pytorch/pytorch/tree/master/test>`_.
+
+Code for generating tests and testing helper functions are located under `pytorch/torch/testing/_internal <https://github.com/pytorch/pytorch/tree/master/torch/testing/_internal>`_.
+
+Running PyTorch's tests
+=======================
+
+# Directly running python test files (preferred)
+================================================
+
+Most PyTorch test files can be run using unittest or pytest (used in CI).  Both options can use `-k <filter>` to filter tests by string and `-v` for verbose.
+
+## Unittest
+===========
+
+To run test_torch.py, use:
+
+```
+
+python test_torch.py
+
+```
+
+Additional unittest-specific arguments can be appended to this command. For example, to run only a specific test:
+
+```
+
+python test_torch.py <TestClass>.<TestName>
+
+```
+
+## Pytest
+=========
+
+To run test_torch.py, use:
+
+```
+
+pytest test_torch.py
+
+```
+
+or
+
+```
+
+python -m pytest test_torch.py
+
+```
+
+Other useful options include:
+
+* `-x` to stop after first failure
+
+* `-s` to show output of stdout/stderr
+
+* `--lf` to run only the failed tests from the last pytest invocation
+
+# Running via `test/run_test.py`
+================================
+
+In addition to directly running python test files. PyTorch's `Continuous Integeration](https://github.com/pytorch/pytorch/wiki/Continuous-Integration) and some specialized test cases can be launched via [pytorch/test/run_test.py <https://github.com/pytorch/pytorch/tree/master/test/run_test.py>`_ and some specialized test cases can be launched via `pytorch/test/run_test.py <https://github.com/pytorch/pytorch/tree/master/test/run_test.py>`_.
+
+It provides some additional features that normally doesn't exist when directly running python test files. For example:
+
+1. Run multiple python test files together via selective run.
+
+2. Run distributed test and cpp_extension tests via custom test handler.
+
+3. Perform other CI related optimizations such as target determination based on changed files, automatic sharding, etc. See `What is CI testing and When <https://github.com/pytorch/pytorch/wiki/Continuous-Integration#what-is-ci-testing-and-when>`_ section for more details.
+
+One can directly run the `test/run_test.py` file and it will selectively run all tests available in your current platform:
+
+```
+
+python test/run_test.py
+
+```
+
+Alternatively you can pass in additional arguments to run specific test(s), use the help function to find out all possible test options.
+
+```
+
+python test/run_test.py -h
+
+```
+
+Using `test/run_test.py` will usually require some extra dependencies, like pytest-rerunfailures and pytest-shard.
+
+# Using environment variables:
+==============================
+
+In addition to unittest and pytest options, PyTorch's test suite also understands the following environment variables:
+
+- PYTORCH*TEST*WITH_SLOW, if set to 1 this will run tests marked with the @slowTest decorator (default=0)
+- PYTORCH*TEST*SKIP_FAST, if set to 1 this will skip tests NOT marked with the @slowtest decorator (default=0)
+- PYTORCH*TEST*WITH*SLOW*GRADCHECK, if set to ON this use PyTorch's slower (but more accurate) gradcheck mode (default=OFF)
+- PYTORCH*TESTING*DEVICE*ONLY*FOR, run tests for ONLY the device types listed here (like 'cpu' and 'cuda')
+- PYTORCH*TESTING*DEVICE*EXCEPT*FOR, run tests for all device types EXCEPT FOR the device types listed here
+- PYTORCH*TEST*SKIP_NOARCH, if set to 1 this will all noarch tests (default=0)
+
+For instance,
+
+```
+
+PYTORCH*TEST*WITH*SLOW=1 python test*torch.py
+
+```
+
+will run the tests in test_torch.py, including those decorated with `@slowTest`.
+
+
+# Using Github label to control CI behavior on PR
+=================================================
+
+_(last updated 2023-03-30)_
+
+PyTorch runs different sets of jobs on PR vs. on master commits.
+
+In order to control the behavior of CI jobs on PR. The most commonly used labels are:
+- `ciflow/trunk`: automatically added when `@pytorchbot merge` is invoked.  These tests are run on every commit in master.
+- `ciflow/periodic`: runs every 4 hours on master.  Includes jobs that are either expensive or slow to run, such as mac x86-64 tests, slow gradcheck, and multigpu.
+- `ciflow/inductor`: runs inductor builds and tests.  This label may be automatically added by our autolabeler if your PR touches certain files.  These jobs are run on every commit in master.
+- `ciflow/mps`: a subset of `ciflow/trunk` that runs mps related builds and tests
+
+For a complete definition of every job that is triggered by these labels, as well as other labels that are not listed here, [search for `ciflow/` in the `.github/workflows` folder](https://github.com/search?q=repo%3Apytorch%2Fpytorch+ciflow%2F+path%3A.github%2Fworkflows%2F*.yml&type=code) or run `grep -r 'ciflow/' .github/workflows`.
+
+Common test utilities
+=====================
+
+Use the test case's `assertEqual <https://github.com/pytorch/pytorch/blob/0e7b5ea6c003b763603d8ca0fe12f476fdf9bf32/torch/testing/_internal/common_utils.py#L1277>`_ to compare objects for equality.
+
+Prefer using `make_tensor <https://github.com/pytorch/pytorch/blob/0e7b5ea6c003b763603d8ca0fe12f476fdf9bf32/torch/testing/_internal/common_utils.py#L1744>`_ when generating test tensors over tensor creation ops like *torch.randn*.
+
+PyTorch's test generation functionality
+=======================================
+
+[See this comment for details on writing test templates.](https://github.com/pytorch/pytorch/blob/0baad214b07ad35be1f10100168ed761cc7c51c0/torch/testing/_internal/common_device_type.py#L25)
+
+PyTorch's test framework lets you instantiate test templates for different operators, datatypes (dtypes), and devices to improve test coverage. It is recommended that all tests be written as templates, whether it's necessary or not, to make it easier for the test framework to inspect the test's properties.
+
+In general, there exist three variants of instantiated tests, which adapt the names at runtime according the following scheme.
+
+- Tests are parametrized with multiple devices:  `<TestClass><DEVICE>.<test*name>*<device>`
+- Tests are additionally parametrized with multiple dtypes: `<TestClass><DEVICE>.<test*name>*<device>_<dtype>`
+- Test are additionally parametrized with multiple operators: `<TestClass><DEVICE>.<test*name>*<operator*name>*<device>_<dtype>`
+
+To use the selection syntax to run only a single test class or test, be it with `unittest` or `pytest`, it is important to use instantiated name rather than the template name. For `pytest` users there is the ``pytest-pytorch` <https://labs.quansight.org/blog/2021/06/pytest-pytorch/>`_ plugin, that re-enables selecting individual test classes or tests by their template name.
+
+OpInfos
 =======
 
-The shortest, simplest way of running the test suite is the following command
-from the root directory of your checkout (after you have
-:ref:`built Python <compiling>`)::
+See the "OpInfos" note in torch/testing/_internal/opinfo/core.py for details on adding an OpInfo and how they work.
 
-    ./python -m test
+OpInfos are used to automatically generate a variety of operator tests from metadata. If you're adding a new operator to the torch, torch.nn, torch.special, torch.fft, or torch.linalg namespaces you should write an OpInfo for it so it's tested properly.
 
-You may need to change this command as follows throughout this section.
-On :ref:`most <mac-python.exe>` macOS systems, replace :file:`./python`
-with :file:`./python.exe`.  On Windows, use :file:`python.bat`.  If using
-Python 2.7, replace ``test`` with ``test.regrtest``.
-
-This will run the majority of tests, but exclude a small portion of them; these
-excluded tests use special kinds of resources: for example, accessing the
-Internet, or trying to play a sound or to display a graphical interface on
-your desktop.  They are disabled by default so that running the test suite
-is not too intrusive.  To enable some of these additional tests (and for
-other flags which can help debug various issues such as reference leaks), read
-the help text::
-
-    ./python -m test -h
-
-If you want to run a single test file, simply specify the test file name
-(without the extension) as an argument.  You also probably want to enable
-verbose mode (using ``-v``), so that individual failures are detailed::
-
-    ./python -m test -v test_abc
-
-To run a single test case, use the ``unittest`` module, providing the import
-path to the test case::
-
-   ./python -m unittest -v test.test_abc.TestABC_Py
-
-Some test modules also support direct invocation,
-which might be useful for IDEs and local debugging::
-
-   ./python Lib/test/test_typing.py
-
-But, there are several important notes:
-
-1. This way of running tests exists only
-   for local developer needs and is discouraged for anything else
-2. Some modules do not support it at all. One example is ``test_importlib``.
-   In other words: if some module does not have ``unittest.main()``, then
-   most likely it does not support direct invocation.
-
-If you have a multi-core or multi-CPU machine, you can enable parallel testing
-using several Python processes so as to speed up things::
-
-   ./python -m test -j0
-
-If you are running a version of Python prior to 3.3 you must specify the number
-of processes to run simultaneously (e.g. ``-j2``).
-
-.. _strenuous_testing:
-
-Finally, if you want to run tests under a more strenuous set of settings, you
-can run ``test`` as::
-
-    ./python -bb -E -Wd -m test -r -w -uall
-
-The various extra flags passed to Python cause it to be much stricter about
-various things (the ``-Wd`` flag should be ``-W error`` at some point, but the
-test suite has not reached a point where all warnings have been dealt with and
-so we cannot guarantee that a bug-free Python will properly complete a test run
-with ``-W error``). The ``-r`` flag to the test runner causes it to run tests in
-a more random order which helps to check that the various tests do not interfere
-with each other.  The ``-w`` flag causes failing tests to be run again to see
-if the failures are transient or consistent.
-The ``-uall`` flag allows the use of all available
-resources so as to not skip tests requiring, e.g., Internet access.
-
-To check for reference leaks (only needed if you modified C code), use the
-``-R`` flag.  For example, ``-R 3:2`` will first run the test 3 times to settle
-down the reference count, and then run it 2 more times to verify if there are
-any leaks.
-
-You can also execute the ``Tools/scripts/run_tests.py`` script as  found in a
-CPython checkout. The script tries to balance speed with thoroughness. But if
-you want the most thorough tests you should use the strenuous approach shown
-above.
-
-
-Unexpected Skips
-----------------
-
-Sometimes when running the test suite, you will see "unexpected skips"
-reported. These represent cases where an entire test module has been
-skipped, but the test suite normally expects the tests in that module to
-be executed on that platform.
-
-Often, the cause is that an optional module hasn't been built due to missing
-build dependencies. In these cases, the missing module reported when the test
-is skipped should match one of the modules reported as failing to build when
-:ref:`compiling`.
-
-In other cases, the skip message should provide enough detail to help figure
-out and resolve the cause of the problem (for example, the default security
-settings on some platforms will disallow some tests)
-
-
-Writing
-=======
-
-Writing tests for Python is much like writing tests for your own code. Tests
-need to be thorough, fast, isolated, consistently repeatable, and as simple as
-possible. We try to have tests both for normal behaviour and for error
-conditions.  Tests live in the ``Lib/test`` directory, where every file that
-includes tests has a ``test_`` prefix.
-
-One difference with ordinary testing is that you are encouraged to rely on the
-:py:mod:`test.support` module. It contains various helpers that are tailored to
-Python's test suite and help smooth out common problems such as platform
-differences, resource consumption and cleanup, or warnings management.
-That module is not suitable for use outside of the standard library.
-
-When you are adding tests to an existing test file, it is also recommended
-that you study the other tests in that file; it will teach you which precautions
-you have to take to make your tests robust and portable.
-
-For tests of the C API, see Tests sections in :ref:`c-api`.
-
-
-Benchmarks
-==========
-
-Benchmarking is useful to test that a change does not degrade performance.
-
-`The Python Benchmark Suite <https://github.com/python/pyperformance>`_
-has a collection of benchmarks for all Python implementations. Documentation
-about running the benchmarks is in the `README.txt
-<https://github.com/python/pyperformance/blob/main/README.rst>`_ of the repo.

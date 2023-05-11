@@ -4,115 +4,39 @@
 Where to Get Help
 =================
 
-If you are working on Python it is very possible you will come across an issue
-where you need some assistance to solve it (this happens to core developers
-all the time).
+Source: https://github.com/pytorch/pytorch/wiki/getting-help-as-a-contributor
 
-Should you require help, there are a :ref:`variety of options available
-<communication>` to seek assistance. If the question involves process or tool
-usage then please check the rest of this guide first as it should answer your
-question.
+As you're building PyTorch, if you find yourself in a position where you're stuck or you have an idea for improving your workflow, there are multiple venues you can reach out at:
 
+PyTorch Contributor Forum
+=========================
 
-.. _help-discourse:
+The `PyTorch Dev Discussions <https://dev-discuss.pytorch.org/>`_ forum is for anyone who is making contributions to PyTorch. 
 
-Discourse
----------
+It's a place to ask for help and share ideas
 
-Python has a hosted Discourse instance at `discuss.python.org <Discourse_>`_.
-This forum has many different categories,
-most of which are open for all users to read and post.
-Those particularly relevant for help contributing to Python itself include:
+File an Issue
+=============
 
-* `Core Development`_ for most general questions and help
-* `Ideas`_ to discuss new ideas for the Python
-* `Core Workflow`_ for questions about the dev infrastructure and bots
+File an issue against the Developer Experience (DevX) team when you want some aspect of your code->test->submit workflow fixed.
 
-.. seealso::
-  :ref:`communication-discourse` for more information on how to get started.
+This could be a bug with the tooling, frustrations you felt while trying to submit your PR, or something feature that you really wish we had.
 
-.. _Discourse: https://discuss.python.org/
-.. _Core Development: https://discuss.python.org/c/core-dev/23
-.. _Core Workflow: https://discuss.python.org/c/core-workflow/8
-.. _Ideas: https://discuss.python.org/c/ideas/6
+To get the DevX team to see your bug faster, file the issue `here <https://github.com/pytorch/pytorch/issues/new/choose>`_ and then add it to the `PyTorch OSS DevX` project (leave the `Status` blank)
+
+!`Assign it to the PyTorch OSS DevX Project <https://user-images.githubusercontent.com/4468967/201147013-c00809f5-4791-4a5e-9f5f-bd1cf10186a9.jpeg>`_
 
 
-.. _help-mailing-lists:
+DevX Office Hours
+=================
 
-Mailing Lists
--------------
+We offer office hours most weeks on Friday, open to everyone. You can bring up problems you're running into or ask about any piece of infrastructure you're curious about.
 
-Further options for seeking assistance include the
-`python-ideas`_ and `python-dev`_ mailing lists,
-which correspond to the `Ideas`_ and `Core Development`_
-:ref:`help-discourse` categories, respectively.
-The Discourse categories are generally more active
-and are the preferred venue for new discussions,
-but the mailing lists are still monitored and responded to.
-These mailing lists are for questions involving the
-development *of* Python, **not** for development *with* Python.
+For details on how to join see `DevX Office Hours <https://github.com/pytorch/pytorch/wiki/Dev-Infra-Office-Hours>`_
 
-.. _python-ideas: https://mail.python.org/mailman3/lists/python-ideas.python.org
-.. _python-dev: https://mail.python.org/mailman3/lists/python-dev.python.org/
+Slack Channel (Advanced Contributors)
+=====================================
 
+For power users who've made multiple contributions or participated significantly on the forums, we also have a Slack channel to discuss advanced topics.
 
-Ask #python-dev
----------------
-
-If you are comfortable with IRC you can try asking on ``#python-dev`` (on
-the `Libera.Chat`_ network). Typically there are a number of experienced
-developers, ranging from triagers to core developers, who can answer
-questions about developing for Python.  As with the mailing lists,
-``#python-dev`` is for questions involving the development *of* Python
-whereas ``#python`` is for questions concerning development *with* Python.
-
-.. note::
-
-  You may not be able to access the history of this channel, so it cannot
-  be used as a "knowledge base" of sorts.
-
-.. _Libera.Chat: https://libera.chat/
-
-Core Mentorship
----------------
-
-If you are interested in improving Python and contributing to its development,
-but don’t yet feel entirely comfortable with the public channels mentioned
-above, `Python Mentors`_ are here to help you.  Python is fortunate to have a
-community of volunteer core developers willing to mentor anyone wishing to
-contribute code, work on bug fixes or improve documentation.  Everyone is
-welcomed and encouraged to contribute.
-
-.. _Python Mentors: https://www.python.org/dev/core-mentorship/
-
-
-.. _office hour:
-
-Core Developers Office Hours
-----------------------------
-
-Several core developers have set aside time to host mentorship office hours.
-During the office hour, core developers are available to help contributors with
-our process, answer questions, and help lower the barrier of contributing and
-becoming Python core developers.
-
-The PSF's code of conduct applies for interactions with core developers
-during office hours.
-
-+------------------+-------------------------------+------------------------------------------------+
-| Core Developer   | Schedule                      | Details                                        |
-+==================+===============================+================================================+
-| Zachary Ware     | See details link              | Schedule at https://calendly.com/zware         |
-+------------------+-------------------------------+------------------------------------------------+
-
-File a Bug
-----------
-
-If you strongly suspect you have stumbled on a bug (be it in the build
-process, in the test suite, or in other areas), then open an issue on the
-`issue tracker`_.  As with every bug report it is strongly advised that
-you detail which conditions triggered it (including the OS name and version,
-and what you were trying to do), as well as the exact error message you
-encountered.
-
-.. _issue tracker: https://github.com/python/cpython/issues
+If you'd like to join, you can `file a request <https://pytorch.org/resources/>`_
